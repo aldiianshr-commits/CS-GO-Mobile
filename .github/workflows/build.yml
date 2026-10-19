@@ -39,7 +39,8 @@ jobs:
       - name: Build APK
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk dist/CSGO-Mobile.apk
           ls -la dist
@@ -48,6 +49,30 @@ jobs:
         with:
           name: CSGO-Mobile-apk
           path: dist/CSGO-Mobile.apk
+
+      - name: Laporan build (cabang ci-report)
+        if: always()
+        run: |
+          {
+            echo "run: ${GITHUB_RUN_NUMBER} commit: ${GITHUB_SHA}"
+            echo "== APK =="; ls -la dist 2>/dev/null
+            BT="$ANDROID_HOME/build-tools/35.0.0"
+            [ -f dist/CSGO-Mobile.apk ] && "$BT/aapt2" dump badging dist/CSGO-Mobile.apk | head -20
+            [ -f dist/CSGO-Mobile.apk ] && unzip -l dist/CSGO-Mobile.apk | grep -E "\.so|classes|\.dex"
+            [ -f dist/CSGO-Mobile.apk ] && "$BT/apksigner" verify --print-certs dist/CSGO-Mobile.apk | head -5
+            SO=$(find app/build -path "*stripped_native_libs*" -name libcsgo.so | head -1)
+            NDK="$ANDROID_HOME/ndk/27.2.12479018"
+            [ -n "$SO" ] && echo "== simbol JNI ==" && "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D --defined-only "$SO" | grep Java_ || true
+            echo "== peringatan/galat build =="
+            grep -nE "warning:|error:|FAILED|BUILD" build.log | grep -v third_party | head -150
+            echo "== ekor log =="; tail -60 build.log
+          } > ci-report.txt 2>&1 || true
+          git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-report-tmp
+          git rm -rq --cached . || true
+          git add -f ci-report.txt
+          git commit -qm "laporan CI ${GITHUB_RUN_NUMBER}"
+          git push -qf origin HEAD:refs/heads/ci-report
 
       - name: Rilis (tag v*)
         if: startsWith(github.ref, 'refs/tags/v')
