@@ -1,6 +1,8 @@
 #include "renderer.h"
 #include "../shaders/shaders_spv.h"
+#ifdef CSGO_HAS_ADRENOTOOLS
 #include "adrenotools/driver.h"
+#endif
 
 #include <dlfcn.h>
 #include <sched.h>
@@ -40,11 +42,15 @@ bool Renderer::init(const GraphicsConfig& cfg, const SessionConfig& sess, std::s
         if (sess.driverName.empty() || stat((drvDir + sess.driverName).c_str(), &st) != 0) {
             turnipError = "file driver Turnip tidak ditemukan — impor zip driver di menu Driver GPU";
         } else {
+#ifdef CSGO_HAS_ADRENOTOOLS
             std::string tmp = sess.filesDir + "/adrenotools_tmp/";
             mkdir(tmp.c_str(), 0700);
             libvulkan_ = adrenotools_open_libvulkan(RTLD_NOW, ADRENOTOOLS_DRIVER_CUSTOM, tmp.c_str(), hookDir.c_str(),
                                                     drvDir.c_str(), sess.driverName.c_str(), nullptr, nullptr);
             if (!libvulkan_) turnipError = "adrenotools gagal memuat driver Turnip";
+#else
+            turnipError = "adrenotools hanya tersedia di arm64";
+#endif
         }
         if (!libvulkan_) LOGW("Turnip: %s — memakai driver sistem", turnipError.c_str());
     }

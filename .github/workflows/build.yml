@@ -85,15 +85,23 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" dist/CSGO-Mobile.apk --clobber
 
   emulator-smoke:
-    needs: android
+    needs: host-tests
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-java@v4
         with:
-          name: CSGO-Mobile-apk
-          path: dist
+          distribution: temurin
+          java-version: '17'
+      - name: Build APK x86_64 khusus emulator
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+          chmod +x gradlew
+          ./gradlew --no-daemon -q assembleRelease -PsmokeAbi=x86_64
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/CSGO-Mobile.apk
       - name: Buat folder game uji sintetis
         run: |
           cmake -S tests -B build-tests -DCMAKE_BUILD_TYPE=Release > /dev/null

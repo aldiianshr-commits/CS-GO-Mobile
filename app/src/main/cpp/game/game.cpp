@@ -5,7 +5,11 @@
 #include "../format/vtf.h"
 #include "../fs/vfs.h"
 #include "../render/renderer.h"
+#ifdef CSGO_HAS_ADRENOTOOLS
 #include "adrenotools/driver.h"
+#else
+static void adrenotools_set_turbo(bool) {}
+#endif
 
 #include <android/native_window.h>
 #include <dlfcn.h>

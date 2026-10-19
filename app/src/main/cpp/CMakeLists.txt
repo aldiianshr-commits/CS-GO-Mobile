@@ -5,7 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # adrenotools (memuat driver Turnip/Mesa tanpa root) + hook-nya (libmain_hook.so, dll.)
-add_subdirectory(third_party/adrenotools)
+# Hanya arm64 (perangkat Adreno). Build x86_64 dipakai untuk uji asap di emulator CI.
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    add_subdirectory(third_party/adrenotools)
+    set(HAS_ADRENOTOOLS ON)
+endif()
 
 # LZMA SDK (domain publik) — dekoder saja
 add_library(lzma STATIC third_party/lzma/LzmaDec.c)
@@ -33,4 +37,8 @@ add_library(csgo SHARED
 
 target_include_directories(csgo PRIVATE . third_party/adrenotools/include)
 target_compile_options(csgo PRIVATE -Wall -Wno-unused-parameter -Wno-missing-field-initializers -O2)
-target_link_libraries(csgo PRIVATE volk lzma adrenotools android log z dl)
+target_link_libraries(csgo PRIVATE volk lzma android log z dl)
+if(HAS_ADRENOTOOLS)
+    target_link_libraries(csgo PRIVATE adrenotools)
+    target_compile_definitions(csgo PRIVATE CSGO_HAS_ADRENOTOOLS=1)
+endif()
