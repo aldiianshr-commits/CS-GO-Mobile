@@ -34,6 +34,7 @@ public:
     // Gambar satu frame; false jika terjadi galat fatal (device lost)
     bool drawFrame(const Vec3& eye, float pitchDeg, float yawDeg);
     void shutdown();
+    void savePipelineCache();
 
     // info
     std::string gpuName, driverInfo;
@@ -93,7 +94,6 @@ private:
                             VkShaderModule vs, VkShaderModule fs, VkPipelineLayout layout, bool vertexInput);
     VkShaderModule shader(const uint32_t* code, size_t bytes);
     void loadPipelineCache();
-    void savePipelineCache();
     VkDescriptorSet allocSet(VkDescriptorSetLayout layout);
     void writeWorldSet(VkDescriptorSet set, int tex0, int tex1, VkImageView lm);
     void applyThreadAffinity();

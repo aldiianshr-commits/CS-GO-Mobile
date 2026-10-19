@@ -314,7 +314,7 @@ void Game::threadMain() {
     ANativeWindow* window = nullptr;
     auto lastStat = Clock::now();
     auto last = Clock::now();
-    int frames = 0;
+    int frames = 0, totalFrames = 0;
     double frameAccum = 0;
     float autosaveTimer = 0;
 
@@ -401,6 +401,9 @@ void Game::threadMain() {
         int64_t remain = targetNs - workNs;
         if (remain > 200000) std::this_thread::sleep_for(std::chrono::nanoseconds(remain - 150000));
         while (std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - frameStart).count() < targetNs) {}
+
+        // simpan cache pipeline lebih awal (aplikasi bisa dimatikan paksa oleh sistem)
+        if (++totalFrames == 120) r.savePipelineCache();
 
         // --- statistik
         ++frames;

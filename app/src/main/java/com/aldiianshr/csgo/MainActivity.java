@@ -110,16 +110,26 @@ public class MainActivity extends Activity {
         setContentView(sv);
 
         // Pintasan/otomasi: am start -n com.aldiianshr.csgo/.MainActivity --es autostart de_dust2
-        String auto = getIntent().getStringExtra("autostart");
-        if (auto != null && !auto.isEmpty() && hasStorage()) launch(auto);
+        handleAutostart(getIntent());
+    }
+
+    /** Otomasi/uji: --es autostart <peta> [--ei preset 0..4] */
+    private void handleAutostart(Intent intent) {
+        String auto = intent.getStringExtra("autostart");
+        if (auto == null || auto.isEmpty() || !hasStorage()) return;
+        int preset = intent.getIntExtra("preset", -1);
+        if (preset >= 0 && preset <= 4) {
+            s.applyPreset(preset);
+            s.save();
+        }
+        launch(auto);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        String auto = intent.getStringExtra("autostart");
-        if (auto != null && !auto.isEmpty() && hasStorage()) launch(auto);
+        handleAutostart(intent);
     }
 
     @Override
