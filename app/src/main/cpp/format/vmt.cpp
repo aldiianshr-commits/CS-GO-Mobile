@@ -69,7 +69,73 @@ bool parseBlock(Tok& tk, KvNode& node, int depth) {
 }
 } // namespace
 
+// KeyValues biner (kemungkinan dipakai file konsol): [tipe][nama\0][nilai]...; 8 = akhir blok
+static bool parseBinaryKv(const uint8_t* d, size_t n, size_t& i, KvNode& node, int depth, bool be) {
+    if (depth > 32) return false;
+    while (i < n) {
+        uint8_t type = d[i++];
+        if (type == 8 || type == 11) return true;
+        size_t e = i;
+        while (e < n && d[e]) ++e;
+        if (e >= n) return false;
+        KvNode c;
+        c.key = toLower(std::string((const char*)d + i, e - i));
+        i = e + 1;
+        auto rd32 = [&](uint32_t& v) -> bool {
+            if (i + 4 > n) return false;
+            v = be ? rd32be(d + i) : rd32le(d + i);
+            i += 4;
+            return true;
+        };
+        uint32_t u = 0;
+        switch (type) {
+            case 0:
+                c.isBlock = true;
+                if (!parseBinaryKv(d, n, i, c, depth + 1, be)) return false;
+                break;
+            case 1: {
+                size_t z = i;
+                while (z < n && d[z]) ++z;
+                c.value.assign((const char*)d + i, z - i);
+                i = z + 1;
+                break;
+            }
+            case 2: case 4: case 6:
+                if (!rd32(u)) return false;
+                c.value = std::to_string((int32_t)u);
+                break;
+            case 3: {
+                if (!rd32(u)) return false;
+                float f;
+                memcpy(&f, &u, 4);
+                c.value = std::to_string(f);
+                break;
+            }
+            case 7:
+                if (i + 8 > n) return false;
+                i += 8;
+                break;
+            default:
+                return false;
+        }
+        node.children.push_back(std::move(c));
+    }
+    return depth == 0;
+}
+
 bool parseKeyValues(const std::string& text, KvNode& root) {
+    if (!text.empty() && text[0] == 0) {
+        root = KvNode();
+        root.isBlock = true;
+        const uint8_t* d = (const uint8_t*)text.data();
+        for (bool be : {false, true}) {
+            size_t i = 0;
+            KvNode r;
+            r.isBlock = true;
+            if (parseBinaryKv(d, text.size(), i, r, 0, be) && !r.children.empty()) { root = r; return true; }
+        }
+        return false;
+    }
     Tok tk(text);
     root = KvNode();
     root.isBlock = true;

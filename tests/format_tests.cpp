@@ -316,6 +316,20 @@ int main() {
         CHECK(!c2.dispFloor(0, 0, 5, -50, z, n));
     }
 
+    // ---- KeyValues biner (big-endian)
+    {
+        W w(true);
+        w.u8(0); w.str("LightmappedGeneric");
+        w.u8(1); w.str("$basetexture"); w.str("dev/bin_tex");
+        w.u8(2); w.str("$alphatest"); w.i32(1);
+        w.u8(8); w.u8(8);
+        Vfs v2;
+        v2.addRaw("materials/dev/bin.vmt", makeMemFile(std::vector<uint8_t>(w.d)));
+        v2.finalizeArchives();
+        Material m = loadMaterial(v2, "dev/bin");
+        CHECK(m.found && m.shader == "lightmappedgeneric" && m.get("$basetexture") == "dev/bin_tex" && m.flag("$alphatest"));
+    }
+
     // ---- dekoder BC3
     {
         uint8_t blk[16] = {255, 0, 0, 0, 0, 0, 0, 0, 0xE0, 0x07, 0xE0, 0x07, 0, 0, 0, 0};

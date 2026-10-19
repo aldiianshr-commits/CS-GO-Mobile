@@ -870,11 +870,13 @@ bool Renderer::createSwapchain(std::string& err) {
             for (auto m : modes) if (m == VK_PRESENT_MODE_IMMEDIATE_KHR) pm = m;
     }
 
-    swapExtent_ = caps.currentExtent;
-    if (swapExtent_.width == 0xFFFFFFFFu) {
-        swapExtent_.width = (uint32_t)ANativeWindow_getWidth(window_);
-        swapExtent_.height = (uint32_t)ANativeWindow_getHeight(window_);
-    }
+    // Transform IDENTITY + ukuran buffer window (logis/landscape): compositor yang memutar bila perlu.
+    // currentExtent bisa sudah "dipra-rotasi" pada perangkat ber-orientasi alami potret, jadi tidak dipakai.
+    int ww = ANativeWindow_getWidth(window_), wh = ANativeWindow_getHeight(window_);
+    if (ww > 0 && wh > 0) swapExtent_ = {(uint32_t)ww, (uint32_t)wh};
+    else swapExtent_ = caps.currentExtent;
+    swapExtent_.width = std::max(caps.minImageExtent.width, std::min(caps.maxImageExtent.width, swapExtent_.width));
+    swapExtent_.height = std::max(caps.minImageExtent.height, std::min(caps.maxImageExtent.height, swapExtent_.height));
     if (swapExtent_.width == 0 || swapExtent_.height == 0) { err = "ukuran surface 0"; return false; }
     uint32_t count = std::max(caps.minImageCount, 2u);
     if (caps.maxImageCount) count = std::min(count + 1, caps.maxImageCount);
@@ -985,6 +987,7 @@ bool Renderer::createSceneTargets() {
                      VK_IMAGE_ASPECT_COLOR_BIT))
         return false;
     VkImageAspectFlags da = VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (depthFormat_ == VK_FORMAT_D24_UNORM_S8_UINT) da |= VK_IMAGE_ASPECT_STENCIL_BIT;
     if (!createImage(sceneDepth_, sceneW, sceneH, 1, depthFormat_,
                      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, samples, true, da))
         return false;
@@ -1163,7 +1166,11 @@ bool Renderer::drawFrame(const Vec3& eye, float pitchDeg, float yawDeg) {
     pi.pImageIndices = &img;
     r = vkQueuePresentKHR(queue_, &pi);
     frame_ = (frame_ + 1) % kFrames;
-    if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+    // SUBOPTIMAL wajar di Android saat transform != currentTransform (rotasi oleh compositor);
+    // swapchain hanya dibuat ulang bila OUT_OF_DATE atau ukuran window berubah.
+    bool resized = window_ && ((uint32_t)ANativeWindow_getWidth(window_) != swapExtent_.width ||
+                               (uint32_t)ANativeWindow_getHeight(window_) != swapExtent_.height);
+    if (r == VK_ERROR_OUT_OF_DATE_KHR || (r == VK_SUBOPTIMAL_KHR && resized)) {
         std::string e;
         destroySwapchain();
         return createSwapchain(e);

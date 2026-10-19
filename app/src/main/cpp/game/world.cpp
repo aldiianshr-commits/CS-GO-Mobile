@@ -47,8 +47,10 @@ WorldMaterial resolveMaterial(const Vfs& vfs, const std::string& name) {
     wm.name = name;
     Material m = loadMaterial(vfs, name);
     wm.found = m.found;
-    if (!m.found) return wm;
+    // Tanpa VMT (atau VMT tak terbaca): coba tekstur bernama sama dengan material
+    if (!m.found) { wm.baseTex = normPath(name); return wm; }
     wm.baseTex = texPathFromParam(m.get("$basetexture"));
+    if (wm.baseTex.empty() && m.shader != "water") wm.baseTex = normPath(name);
     wm.baseTex2 = texPathFromParam(m.get("$basetexture2"));
     const std::string& sh = m.shader;
     if (sh == "worldvertextransition" || sh == "lightmapped_4wayblend" || sh == "worldtwotextureblend")

@@ -464,7 +464,7 @@ static ContainerKind sniff(const std::string& path, RAFile& f) {
 
 static bool skipTopDir(const std::string& name) {
     std::string n = toLower(name);
-    return n == "saves" || n == "logs" || n == "cache" || n == "drivers" || n == "screenshots";
+    return n == "saves" || n == "logs" || n == "cache" || n == "drivers" || n == "screenshots" || n == "android" || n == ".thumbnails";
 }
 
 void Vfs::walkDir(const std::string& root, const std::string& rel, ContainerInfo& folderInfo, const Progress& progress, int depth) {
