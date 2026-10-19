@@ -1,0 +1,16 @@
+/sdcard/CSGO:
+total 48
+drwxrws--- 3 u0_a159 media_rw 4096 2026-10-19 01:47 Content
+drwxrws--- 2 u0_a159 media_rw 4096 2026-10-19 01:47 cache
+drwxrws--- 3 u0_a159 media_rw 4096 2026-10-19 01:47 csgo
+drwxrws--- 2 u0_a159 media_rw 4096 2026-10-19 01:47 drivers
+drwxrws--- 2 u0_a159 media_rw 4096 2026-10-19 01:47 logs
+drwxrws--- 2 u0_a159 media_rw 4096 2026-10-19 01:48 saves
+
+/sdcard/CSGO/cache:
+total 8
+-rw-rw---- 1 u0_a159 media_rw 64 2026-10-19 01:49 pipeline_cache.bin
+
+/sdcard/CSGO/saves:
+total 8
+-rw-rw---- 1 u0_a159 media_rw 100 2026-10-19 01:48 de_test.sav

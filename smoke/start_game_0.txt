@@ -1,0 +1,7 @@
+Starting: Intent { cmp=com.aldiianshr.csgo/.MainActivity (has extras) }
+Status: ok
+LaunchState: COLD
+Activity: com.aldiianshr.csgo/.GameActivity
+TotalTime: 2052
+WaitTime: 2081
+Complete

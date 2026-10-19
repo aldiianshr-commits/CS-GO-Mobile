@@ -1,0 +1,4 @@
+feature:android.hardware.vulkan.compute
+feature:android.hardware.vulkan.level=1
+feature:android.hardware.vulkan.version=4198400
+feature:android.software.vulkan.deqp.level=132514561

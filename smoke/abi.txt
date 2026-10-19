@@ -1,0 +1,3 @@
+x86_64
+    primaryCpuAbi=x86_64
+    versionName=0.1.10
