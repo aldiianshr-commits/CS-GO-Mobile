@@ -188,7 +188,33 @@ static std::vector<uint8_t> makeStfs() {
     return f;
 }
 
-int main() {
+static void writeFile(const std::string& path, const std::vector<uint8_t>& d) {
+    std::string dir = path.substr(0, path.find_last_of('/'));
+    std::string cmd = "mkdir -p '" + dir + "'";
+    if (system(cmd.c_str()) != 0) { fprintf(stderr, "mkdir gagal\n"); exit(3); }
+    FILE* f = fopen(path.c_str(), "wb");
+    if (!f) { fprintf(stderr, "tidak bisa menulis %s\n", path.c_str()); exit(3); }
+    fwrite(d.data(), 1, d.size(), f);
+    fclose(f);
+}
+
+// Folder game sintetis untuk uji asap di emulator (format sama seperti file Xbox 360)
+static int writeTestGame(const std::string& root) {
+    std::string base = "\"LightmappedGeneric\"\n{\n\t\"$basetexture\" \"dev/floor_tex\"\n}\n";
+    std::string sky = "\"UnlitGeneric\"\n{\n\t\"$basetexture\" \"dev/floor_tex\"\n}\n";
+    std::vector<std::pair<std::string, std::vector<uint8_t>>> files = {
+        {"materials/dev/floor.vmt", S(base)}, {"materials/dev/floor_tex.360.vtf", makeVtfx(true)}};
+    for (const char* sfx : {"rt", "bk", "lf", "ft", "up", "dn"})
+        files.push_back({std::string("materials/skybox/sky_test") + sfx + ".vmt", S(sky)});
+    writeFile(root + "/csgo/zip0.360.zip", makeZip(files));
+    writeFile(root + "/csgo/maps/de_test.360.bsp", makeBsp(true));
+    writeFile(root + "/Content/0000000000000000/5841125A/000D0000/TESTPKG", makeStfs());
+    printf("Folder uji ditulis ke %s\n", root.c_str());
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    if (argc == 3 && std::string(argv[1]) == "--write-game") return writeTestGame(argv[2]);
     // ---- LZMA Valve
     {
         std::vector<uint8_t> src(10000);

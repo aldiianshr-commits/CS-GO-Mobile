@@ -83,3 +83,44 @@ jobs:
             --title "CS:GO Mobile ${GITHUB_REF_NAME}" \
             --notes-file RELEASE_NOTES.md || \
           gh release upload "${GITHUB_REF_NAME}" dist/CSGO-Mobile.apk --clobber
+
+  emulator-smoke:
+    needs: android
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: CSGO-Mobile-apk
+          path: dist
+      - name: Buat folder game uji sintetis
+        run: |
+          cmake -S tests -B build-tests -DCMAKE_BUILD_TYPE=Release > /dev/null
+          cmake --build build-tests -j4 > /dev/null
+          ./build-tests/format_tests --write-game testgame
+      - name: Aktifkan KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Uji asap di emulator (x86_64 + terjemahan ARM64)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -skin 1920x1200
+          disable-animations: true
+          script: bash tools/smoke_test.sh
+      - name: Unggah hasil uji asap (cabang ci-smoke)
+        if: always()
+        run: |
+          mkdir -p smoke
+          git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-smoke-tmp
+          git rm -rq --cached . || true
+          git add -f smoke
+          git commit -qm "uji asap ${GITHUB_RUN_NUMBER}" || true
+          git push -qf origin HEAD:refs/heads/ci-smoke

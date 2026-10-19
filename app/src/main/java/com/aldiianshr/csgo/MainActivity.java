@@ -108,6 +108,10 @@ public class MainActivity extends Activity {
         root.addView(lim);
 
         setContentView(sv);
+
+        // Pintasan/otomasi: am start -n com.aldiianshr.csgo/.MainActivity --es autostart de_dust2
+        String auto = getIntent().getStringExtra("autostart");
+        if (auto != null && !auto.isEmpty() && hasStorage()) launch(auto);
     }
 
     @Override
