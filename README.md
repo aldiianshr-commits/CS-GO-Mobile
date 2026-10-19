@@ -29,6 +29,17 @@ Ini perlu jelas sejak awal — yang Anda dapatkan adalah **mode jelajah peta**, 
 - **Multiplayer** tidak ada.
 - Paket **Games on Demand (SVOD/GOD)** belum didukung — ubah ke ISO atau ekstrak isinya.
 - Parser divalidasi dengan **data uji sintetis** yang mengikuti spesifikasi (lihat `tests/`), belum dengan file CS:GO 360 asli karena file game tidak tersedia di lingkungan build. Jika ada peta/tekstur yang gagal dimuat, kirim `/CSGO/logs/last.log` agar bisa diperbaiki.
+- Driver **Turnip** hanya bisa diuji di perangkat Adreno sungguhan; jalur kode adrenotools sudah ada dan otomatis kembali ke driver sistem bila gagal.
+
+## Pengujian yang sudah berjalan otomatis (CI)
+
+Setiap push menjalankan:
+
+1. **Uji parser di host** (`tests/format_tests.cpp`): LZMA Valve, BSP big-endian + lump LZMA, VTFX DXT1 (byte-swap 360, dengan/tanpa LZMA), ZIP + VMT `patch`, KeyValues biner, STFS (blok berurutan & rantai hash), atlas lightmap, kolisi + gerak pemain, dekoder BC3.
+2. **Build APK rilis** (arm64-v8a) — hasil `aapt2`, tanda tangan, dan simbol JNI dicatat di cabang `ci-report`.
+3. **Uji asap di emulator Android 13** (build x86_64 khusus uji, Vulkan SwiftShader): memasang APK, menyalin folder game sintetis berformat Xbox 360 (paket STFS + `zip0.360.zip` + `de_test.360.bsp`) ke `/sdcard/CSGO`, memindai, memuat peta dengan preset Medium / Ultra (MSAA 4x, skala 125%) / Very Low, menggerakkan pemain lewat sentuhan, menyimpan posisi, lalu mengambil tangkapan layar & log ke cabang `ci-smoke`.
+
+Otomasi/pintasan: `adb shell am start -n com.aldiianshr.csgo/.MainActivity --es autostart de_dust2 --ei preset 2` langsung memuat peta (preset opsional 0–4).
 
 ## Instalasi
 
