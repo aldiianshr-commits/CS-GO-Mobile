@@ -1,0 +1,60 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Uji parser format (host)
+        run: |
+          cmake -S tests -B build-tests -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build-tests -j4
+          ./build-tests/format_tests
+
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Pasang NDK & CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/CSGO-Mobile.apk
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CSGO-Mobile-apk
+          path: dist/CSGO-Mobile.apk
+
+      - name: Rilis (tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/CSGO-Mobile.apk \
+            --title "CS:GO Mobile ${GITHUB_REF_NAME}" \
+            --notes-file RELEASE_NOTES.md || \
+          gh release upload "${GITHUB_REF_NAME}" dist/CSGO-Mobile.apk --clobber

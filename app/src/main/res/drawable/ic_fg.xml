@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon orisinal: bidikan (crosshair) oranye dengan cincin — bukan logo resmi -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#F0A21B" android:strokeWidth="5" android:fillColor="#00000000"
+        android:pathData="M54,30a24,24 0 1,0 0.01,0z" />
+    <path android:fillColor="#F0A21B" android:pathData="M51.5,22h5v18h-5z M51.5,68h5v18h-5z M22,51.5h18v5h-18z M68,51.5h18v5h-18z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,50a4,4 0 1,0 0.01,0z" />
+</vector>
