@@ -14,6 +14,8 @@ adb logcat -c
 adb shell am start -W -n $PKG/.MainActivity > smoke/start_main.txt 2>&1
 sleep 12
 adb exec-out screencap -p > smoke/main.png
+adb shell am force-stop $PKG
+sleep 2
 adb shell am start -W -n $PKG/.MainActivity --es autostart de_test > smoke/start_game.txt 2>&1
 sleep 30
 adb exec-out screencap -p > smoke/game.png

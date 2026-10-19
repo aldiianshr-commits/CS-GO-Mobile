@@ -115,6 +115,14 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        String auto = intent.getStringExtra("autostart");
+        if (auto != null && !auto.isEmpty() && hasStorage()) launch(auto);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         s.load();
